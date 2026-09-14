@@ -1,0 +1,36 @@
+seed: 123
+gpu: 0  # gpu num (if gpu is unavailable, device is cpu)
+log_level: DEBUG  # DEBUG, INFO, WARNING, ERROR
+
+train_val_test: [0.8, 0.1, 0.1]
+
+result_file_name_postfix: "default"
+
+checkpoint_dir_name: "./checkpoint/"
+
+user_id_name: "user_id"
+item_id_name: "item_id"
+user_idx_name: "user_idx"
+item_idx_name: "item_idx"
+neg_item_idx_name: "neg_item_idx"
+
+# default dataset config
+dataset: "online-retail"
+usecols: ["InvoiceNo", "StockCode", "Description", "Quantity", "InvoiceDate", "UnitPrice", "CustomerID"]
+positive_rating_threshold: null
+
+# default model
+model: "LightGCN"
+
+# training parameter
+train_batch_size: 512
+data_split: "group_sort"
+epochs: 300
+early_stop_num: 10
+
+# eval
+eval_batch_size: 10  # user unit
+topk: 10
+
+# save
+is_save_data: False

@@ -1,0 +1,5 @@
+source_format: "online_retail"
+dataset_lower: 5
+dataset_upper: 1000000
+split_group_name: "invoice_id"
+min_user_groups: 3

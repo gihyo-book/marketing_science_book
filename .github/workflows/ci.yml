@@ -1,0 +1,174 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lint:
+    name: Ruff lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Run ruff check
+        run: uvx ruff@0.16.4 check .
+
+  notebooks-main:
+    name: "Notebook ch${{ matrix.chapter }} (py314-main)"
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      IPYTHONDIR: ${{ github.workspace }}/.ipython-ci
+      MPLBACKEND: Agg
+    strategy:
+      fail-fast: false
+      matrix:
+        chapter: ["02", "03", "04", "05", "06", "07", "08", "09", "10", "12"]
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install system dependencies
+        run: sudo apt-get install -y --no-install-recommends graphviz
+
+      - name: Install dependencies
+        run: uv sync --project envs/py314-main
+
+      - name: Prepare Online Retail dataset
+        if: matrix.chapter == '02' || matrix.chapter == '12'
+        run: |
+          archive_file="${RUNNER_TEMP}/online-retail.zip"
+          workbook_file="${RUNNER_TEMP}/online-retail.xlsx"
+          mkdir -p 02/data
+          curl --fail --location --retry 3 \
+            "https://archive.ics.uci.edu/static/public/352/online+retail.zip" \
+            --output "${archive_file}"
+          unzip -p "${archive_file}" "Online Retail.xlsx" > "${workbook_file}"
+          uv run --project envs/py314-main --with openpyxl python -c \
+            'import pandas as pd, sys; frame = pd.read_excel(sys.argv[1]); frame["CustomerID"] = frame["CustomerID"].astype("Int64"); frame.to_csv(sys.argv[2], index=False)' \
+            "${workbook_file}" 02/data/online_retail.csv.gz
+          test -s 02/data/online_retail.csv.gz
+
+      - name: Prepare chapter 7 dataset
+        if: matrix.chapter == '07'
+        run: |
+          mkdir -p 07/data
+          curl --fail --location --retry 3 \
+            "https://raw.githubusercontent.com/IBM/telco-customer-churn-on-icp4d/master/data/Telco-Customer-Churn.csv" \
+            --output 07/data/Telco-Customer-Churn.csv
+          test -s 07/data/Telco-Customer-Churn.csv
+
+      - name: Prepare chapter 8 dataset
+        if: matrix.chapter == '08'
+        run: |
+          archive_path="${RUNNER_TEMP}/groceries.zip"
+          mkdir -p 08/data
+          curl --fail --location --retry 3 \
+            "https://www.kaggle.com/api/v1/datasets/download/rashikrahmanpritom/groceries-dataset-for-market-basket-analysismba" \
+            --output "${archive_path}"
+          unzip -q "${archive_path}" -d 08/data
+          test -f "08/data/Groceries data.csv"
+
+      - name: Register notebook kernel
+        run: uv run --project envs/py314-main python -m ipykernel install --user --name marketing-science-src --display-name "marketing-science-src (Python 3.14)"
+
+      - name: Execute notebook with papermill
+        if: matrix.chapter != '12'
+        run: |
+          mkdir -p executed_notebooks
+          uv run --project envs/py314-main papermill \
+            ${{ matrix.chapter }}/${{ matrix.chapter }}_main.ipynb \
+            executed_notebooks/${{ matrix.chapter }}_main.ipynb \
+            --kernel marketing-science-src \
+            --cwd ${{ matrix.chapter }}
+
+      - name: Execute chapter 12 smoke test
+        if: matrix.chapter == '12'
+        run: |
+          mkdir -p executed_notebooks
+          uv run --project envs/py314-main papermill \
+            12/12_main.ipynb \
+            executed_notebooks/12_main.ipynb \
+            --kernel marketing-science-src \
+            --cwd 12 \
+            -p CI_SMOKE_TEST true
+
+      - name: Upload executed notebook
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: "executed-notebook-ch${{ matrix.chapter }}"
+          path: "executed_notebooks/${{ matrix.chapter }}_main.ipynb"
+          if-no-files-found: ignore
+
+  notebooks-ch11:
+    name: Notebook ch11 (py311-ch11)
+    needs: lint
+    runs-on: ubuntu-latest
+    env:
+      IPYTHONDIR: ${{ github.workspace }}/.ipython-ci
+      MPLBACKEND: Agg
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --project envs/py311-ch11
+
+      - name: Prepare Online Retail dataset
+        run: |
+          archive_file="${RUNNER_TEMP}/online-retail.zip"
+          workbook_file="${RUNNER_TEMP}/online-retail.xlsx"
+          mkdir -p 02/data
+          curl --fail --location --retry 3 \
+            "https://archive.ics.uci.edu/static/public/352/online+retail.zip" \
+            --output "${archive_file}"
+          unzip -p "${archive_file}" "Online Retail.xlsx" > "${workbook_file}"
+          uv run --project envs/py311-ch11 --with openpyxl python -c \
+            'import pandas as pd, sys; frame = pd.read_excel(sys.argv[1]); frame["CustomerID"] = frame["CustomerID"].astype("Int64"); frame.to_csv(sys.argv[2], index=False)' \
+            "${workbook_file}" 02/data/online_retail.csv.gz
+          test -s 02/data/online_retail.csv.gz
+
+      - name: Register notebook kernel
+        run: uv run --project envs/py311-ch11 python -m ipykernel install --user --name marketing-science-ch11 --display-name "marketing-science-ch11 (Python 3.11)"
+
+      - name: Execute notebook with papermill
+        run: |
+          mkdir -p executed_notebooks
+          uv run --project envs/py311-ch11 papermill \
+            11/11_main.ipynb \
+            executed_notebooks/11_main.ipynb \
+            --kernel marketing-science-ch11 \
+            --cwd 11
+
+      - name: Upload executed notebook
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: executed-notebook-ch11
+          path: executed_notebooks/11_main.ipynb
+          if-no-files-found: ignore

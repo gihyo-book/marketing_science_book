@@ -1,0 +1,36 @@
+[project]
+name = "marketing-science-ch11"
+version = "0.1.0"
+description = "Chapter 11 notebook environment for implicit and scikit-surprise"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "dataframe-image>=0.2.7",
+    "implicit>=0.7.2",
+    "ipykernel",
+    "ipywidgets",
+    "jupyterlab",
+    "loguru>=0.7.3",
+    "matplotlib",
+    "matplotlib-fontja>=1.1.0",
+    "mlxtend<0.24.0",
+    "numpy<2",
+    "pandas>=3.0.2",
+    "papermill>=2.7.0",
+    "polars",
+    "pyarrow>=23.0.1",
+    "scipy",
+    "scikit-learn",
+    "scikit-surprise",
+    "statsmodels>=0.14.6",
+    "torch>=2.11.0",
+    "watermark>=2.6.0",
+]
+
+[tool.uv]
+package = false
+dev-dependencies = [
+    "pytest>=8.0",
+]
+
+[[tool.uv.index]]
+url = "https://download.pytorch.org/whl/cpu"
