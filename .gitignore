@@ -1,4 +1,6 @@
 .venv/
+.ipython-ci/
+.pytest-notebooks/
 .ipynb_checkpoints/
 __pycache__/
 *.py[cod]

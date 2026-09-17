@@ -102,32 +102,10 @@ class Evaluator:
         ) / self.topk_ndcg_score_matrix.sum(dim=1)
 
     def get_mrr(self):
-        rank_matrix = torch.tensor(
-            [
-                [
-                    rank
-                    for rank in range(self.topk_binary_matrix.shape[1], 0, -1)
-                ]
-                for _ in range(self.topk_binary_matrix.shape[0])
-            ],
-            dtype=torch.long,
-            device=self.device,
-        )
-        rank_matrix = torch.mul(rank_matrix, self.topk_binary_matrix)
-        rank_matrix = torch.cat(
-            [
-                torch.zeros(
-                    self.topk_binary_matrix.shape[0], 1, device=self.device
-                ),
-                rank_matrix,
-            ],
-            dim=1,
-        )
-        _, rank_indices = torch.topk(rank_matrix, k=1, dim=1)
-        rank_indices = rank_indices.to(torch.double)
-        return torch.reciprocal(
-            torch.where(rank_indices == 0, float("inf"), rank_indices)
-        )
+        has_hit = self.topk_binary_matrix.any(dim=1)
+        first_hit_rank = self.topk_binary_matrix.argmax(dim=1) + 1
+        reciprocal_rank = torch.reciprocal(first_hit_rank.to(torch.float32))
+        return torch.where(has_hit, reciprocal_rank, 0.0)
 
     def get_map(self):
         cumulative_hits = torch.mul(
@@ -196,7 +174,7 @@ class Trainer:
         return checkpoint_model_file, checkpoint_model_file_2
 
     def _initialize_training_state(self):
-        self.best_valid_metric = 0
+        self.best_valid_metric = -float("inf")
         self.best_valid_epoch = -1
         self.best_valid_recall = 0
         self.best_valid_precision = 0
@@ -207,6 +185,9 @@ class Trainer:
     def _sample_negative_items(self, user_idx_batch, pos_item_idx_batch):
         user_idx_array = np.array(user_idx_batch)
         pos_item_idx_array = np.array(pos_item_idx_batch)
+        negative_sets = self.dataset.user_idx2neg_item_idx_set_dict
+        if any(not negative_sets[user_idx] for user_idx in user_idx_array):
+            raise ValueError("A user has no negative items.")
         pending_indices = list(range(len(user_idx_array)))
 
         ret_user_idx_list = []
@@ -225,10 +206,7 @@ class Trainer:
                 pos_item_idx_array[pending_indices],
                 temp_negative_item_idx,
             ):
-                if (
-                    neg_item_idx
-                    in self.dataset.user_idx2neg_item_idx_set_dict[user_idx]
-                ):
+                if neg_item_idx in negative_sets[user_idx]:
                     ret_user_idx_list.append(user_idx)
                     ret_pos_item_idx_list.append(pos_item_idx)
                     ret_neg_item_idx_list.append(neg_item_idx)

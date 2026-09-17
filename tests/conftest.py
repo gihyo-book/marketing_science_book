@@ -13,6 +13,11 @@ def _configure_notebook_test_env(tmp_path_factory):
 
     ipython_dir = tmp_path_factory.mktemp("ipython")
     os.environ.setdefault("IPYTHONDIR", str(ipython_dir))
+    os.environ.setdefault(
+        "JUPYTER_DATA_DIR", str(tmp_path_factory.mktemp("jupyter"))
+    )
+    os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
+    os.environ.setdefault("OMP_NUM_THREADS", "2")
 
     subprocess.run(
         [
@@ -22,9 +27,9 @@ def _configure_notebook_test_env(tmp_path_factory):
             "install",
             "--user",
             "--name",
-            "python3",
+            "marketing-science-src",
             "--display-name",
-            "python3",
+            "Marketing Science (Python 3.14)",
         ],
         check=True,
     )
