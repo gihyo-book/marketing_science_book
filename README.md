@@ -1,6 +1,6 @@
-# マーケティングサイエンス実務本 サポートページ
+# マーケティングサイエンスの理論と実践 サポートページ
 
-本リポジトリは、マーケティングサイエンス実務本（仮）の
+本リポジトリは、「マーケティングサイエンスの理論と実践」のサポートページです。
 
 1. 環境構築方法を含むコード
 2. 本誌では省略した証明
@@ -14,158 +14,75 @@
 - `uv` 公式サイト: https://docs.astral.sh/uv/
 - `uv` インストール手順: https://docs.astral.sh/uv/getting-started/installation/
 
-## Python 環境構成
+## Python 環境
 
-仮想環境は `envs/` 以下で章ごとに分けて管理する。
+全章で Python 3.14.4 と共通の環境を使います。
+環境の設定ファイルはリポジトリのルートに置き、Python のバージョンは `.python-version`、ライブラリのバージョンは `uv.lock` で指定しています。
 
-| ディレクトリ | Python | 対象章 | 主なライブラリ |
-|---|---|---|---|
-| `envs/py314-main/` | 3.14 | 第1〜10章・第12章（主環境） | numpy, pandas, polars, scipy, matplotlib, scikit-learn, statsmodels, pymc, lifelines, lightgbm, mlxtend, prophet, lifetimes, torch |
-| `envs/py311-ch11/` | 3.11 | 第11章（補助環境） | numpy, polars, scipy, matplotlib, torch, implicit, scikit-surprise |
+### 初回の準備（共通）
 
-> **第11章を別環境にする理由**: `implicit` が Python 3.14 系で不安定なため。
-
----
-
-## はじめに（初回セットアップ）
-
-### 1. uv をインストール
-
-macOS の例:
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-インストール後、バージョン確認:
-
-```bash
-uv --version
-```
-
-### 2. リポジトリを取得
+`uv` をインストールした後、リポジトリを取得します。
 
 ```bash
 git clone https://github.com/gihyo-book/marketing_science_book.git
 cd marketing_science_book
 ```
 
----
-
-## 仮想環境の構築
-
-第6章でモデル構造を描画するには、Pythonパッケージに加えてGraphviz本体（`dot`コマンド）が必要になる。先にOSへインストールし、`dot -V`で利用できることを確認する。
+第6章のモデル図には Graphviz 本体（`dot` コマンド）が必要です。
+Linux では PyMC の計算用に C++ コンパイラ、LightGBM などの実行用に `libgomp1` も入れます。
 
 ```bash
-# macOS（Homebrew）
+# macOS
 brew install graphviz
-
 # Ubuntu / Debian
 sudo apt-get update
-sudo apt-get install graphviz
-
-# インストール確認
+sudo apt-get install g++ graphviz libgomp1
 dot -V
 ```
 
-続いて、Pythonの仮想環境を構築する。
+リポジトリのルートで、共通の Python 環境を構築します。
+`uv sync --locked` により、リポジトリのルートに仮想環境の `.venv/` ディレクトリが作成され、必要なライブラリがインストールされます。
+
 
 ```bash
-# 主環境（第1〜10章・第12章）
-uv sync --project envs/py314-main
-
-# 第11章用（implicit / scikit-surprise）
-uv sync --project envs/py311-ch11
+uv sync --locked
 ```
 
-必要に応じて、各環境で以下を実行してパッケージ状態を確認できる。
+`--locked` は、設定と `uv.lock` が合わない場合にエラーにし、`uv.lock` を自動で書き換えないための指定です。
+
+環境構築後は、VS Code または JupyterLab のいずれかでノートブックを実行できます。
+
+### VS Code を利用する場合
+
+1. VS Code に Microsoft の **Python** 拡張機能と **Jupyter** 拡張機能をインストールします。
+2. リポジトリのルートフォルダーを VS Code で開きます。
+3. `.ipynb` ファイルを開き、右上のカーネル選択から **Python Environments** を選び、ルートの `.venv/` の Python を指定します。全ノートブックでこの環境を選んでください。
+
+Python ファイルを編集・実行する場合も、コマンドパレットの `Python: Select Interpreter` でルートの `.venv/` の Python を選びます。
+`.venv/` を直接選ぶ場合、カーネルの登録は不要です。VS Code で実行するときは、`jupyter lab` の起動も不要です。
+
+カーネルを **Marketing Science (Python 3.14)** という名前で選びたい場合は、リポジトリのルートで次のコマンドを一度実行します。
 
 ```bash
-uv pip list --project envs/py314-main
-uv pip list --project envs/py311-ch11
+uv run --locked python -m ipykernel install --user --name marketing-science-src --display-name "Marketing Science (Python 3.14)"
 ```
 
----
+登録後は、右上のカーネル選択で **Select Another Kernel... → Jupyter Kernels → Marketing Science (Python 3.14)** の順に選びます。
+この方法では **Jupyter Kernels** から登録した名前を選び、**Python Environments** から選ぶ場合は引き続き `.venv/` の Python を指定します。
 
-## Jupyter カーネルの登録
+### JupyterLab を利用する場合
+
+リポジトリのルートで、カーネルを登録して JupyterLab を起動します。カーネルの登録は初回のみ必要です。
 
 ```bash
-# 主環境
-cd envs/py314-main
-uv run python -m ipykernel install --user --name marketing-science-src --display-name "marketing-science-src (Python 3.14)"
-
-# 第11章用
-cd envs/py311-ch11
-uv run python -m ipykernel install --user --name marketing-science-ch11 --display-name "marketing-science-ch11 (Python 3.11)"
+uv run --locked python -m ipykernel install --user --name marketing-science-src --display-name "Marketing Science (Python 3.14)"
+uv run --locked jupyter lab
 ```
 
-カーネル登録後は、Jupyter または VS Code 上でノートブックごとに適切なカーネルを選択する。
+ブラウザーで開いた JupyterLab で、全ノートブックのカーネルに **Marketing Science (Python 3.14)**（登録名: `marketing-science-src`）を選んでください。
 
----
-
-## VS Code での使い方
-
-`settings.json` に以下を追加して、両環境の Python インタープリタを認識させる。
-
-```json
-"python.venvFolders": [
-    "${workspaceFolder}/envs/py314-main",
-    "${workspaceFolder}/envs/py311-ch11"
-]
-```
-
----
-
-## Jupyter Lab での使い方
-
-### 起動
-
-主環境（第1〜10章・第12章）を使う場合:
-
-```bash
-uv run --project envs/py314-main jupyter lab
-```
-
-第11章環境を使う場合:
-
-```bash
-uv run --project envs/py311-ch11 jupyter lab
-```
-
-### 実行の流れ
-
-- 目的のノートブック（例: `02/02_main.ipynb`）を開く
-- 右上の Kernel Selector から対応カーネルを選ぶ
-- 依存追加が必要な場合は、対応する `envs/*/pyproject.toml` を更新して `uv sync --project ...` を再実行する
-
----
-
-## 利用環境
-
-- 第1〜10章・第12章: `envs/py314-main`（カーネル: `marketing-science-src`）
-- 第11章: `envs/py311-ch11`（カーネル: `marketing-science-ch11`）
-
----
-
-## 注意点
-
-- `envs/` 内の `pyproject.toml` を変更した場合は、対応するディレクトリで `uv sync` を再実行する。
-
----
-
-## コード品質と自動実行
-
-Pythonコードとノートブックの静的検査には、`ruff.toml`の設定を使用します。
-
-```bash
-# GitHub Actions と同じ静的検査
-make lint
-
-# 自動修正
-make lint-fix
-```
-
-GitHub Actionsでは、`develop`ブランチへのpushと`main`ブランチ向けのPull Requestを対象に、Ruffによる静的検査と各章のメインノートブックの実行確認を行います。第2・7・8・11・12章で必要な外部データは、実行時に自動取得します。第12章は実行時間を抑えたスモークテストとして実行します。
+どちらの場合も、[main_314.ipynb](main_314.ipynb) で Python とライブラリのバージョンを確認できます。
+各章で使う外部データの準備方法は、下のノートブック一覧に記載しています。
 
 ## 共通モジュール
 
@@ -179,8 +96,7 @@ GitHub Actionsでは、`develop`ブランチへのpushと`main`ブランチ向�
 
 | ノートブック | 内容 |
 |---|---|
-| [main_314.ipynb](main_314.ipynb) | Python 3.14 主環境の NumPy・Pandas・PyTorch・scikit-learn・statsmodels など主要ライブラリのバージョン確認 |
-| [main_311.ipynb](main_311.ipynb) | Python 3.11 環境（第11章用）の NumPy・Polars・PyTorch・scikit-surprise・implicit など推薦システム向けライブラリのバージョン確認 |
+| [main_314.ipynb](main_314.ipynb) | 全章共通のPython 3.14環境の主要ライブラリ（PyMC-Marketing・implicitを含む）のバージョン確認 |
 
 ## 第0章：はじめに
 
@@ -198,7 +114,15 @@ GitHub Actionsでは、`develop`ブランチへのpushと`main`ブランチ向�
 
 Online Retailのデータは、このリポジトリに含まれていません。ライセンスは[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)です。[UCIの配布ページ](https://archive.ics.uci.edu/dataset/352/online%2Bretail)から
 `Online Retail.xlsx`を取得し、CSV形式の`02/data/online_retail.csv.gz`に変換してください。
-第2・11・12章で同じファイルを使います。CIでは実行時に自動で取得して変換します。
+第2・11・12章で同じファイルを使います。
+
+取得したファイルをリポジトリのルートに置き、次のコマンドで変換できます。
+
+```bash
+mkdir -p 02/data
+uv run --locked python -c \
+  'import pandas as pd; frame = pd.read_excel("Online Retail.xlsx"); frame["CustomerID"] = frame["CustomerID"].astype("Int64"); frame.to_csv("02/data/online_retail.csv.gz", index=False)'
+```
 
 ## 第3章：新製品の普及を予測する
 
@@ -274,7 +198,7 @@ Kaggleの配布ページでは、ライセンスは[CC0 1.0（Public Domain）](
 
 | ノートブック | 内容 |
 |---|---|
-| [10/10_main.ipynb](10/10_main.ipynb) | トランザクションログから RFM サマリーを作成し、BG/NBD で生存確率と将来購買回数、ガンマ–ガンマモデルで平均購買金額を予測。予測 LTV を算出し、VIPランキング・顧客セグメント・LTV分布を可視化 |
+| [10/10_main.ipynb](10/10_main.ipynb) | トランザクションログから RFM サマリーを作成し、BG/NBD で生存確率と将来購買回数、ガンマ–ガンマモデルで平均購買金額を予測。予測 LTV を算出し、VIPランキング・顧客セグメント・LTV分布を可視化。PyMC-Marketingでも同じRFMから12か月のLTVと94%信用区間を計算し、学習に使っていない期間の購買予測を確認 |
 | [10/10_bg_nbd.ipynb](10/10_bg_nbd.ipynb) | 付録：BG/NBD モデルの尤度関数における生存項（購買継続確率）と離反項（購買終了確率）の導出と統計的解釈を、確率微積分を用いて段階的に説明 |
 | [10/10_marginalization_derivation.ipynb](10/10_marginalization_derivation.ipynb) | 付録：BG/NBD モデルの尤度導出で生じる 2 つの積分（購買レート $\lambda_i$ のガンマ分布による周辺化と、離反確率 $\theta_i$ のベータ分布による周辺化）を、ガンマ積分・ベータ関数の公式を用いてステップごとに導出 |
 | [10/10_bgnbd_expected_purchases_derivation.ipynb](10/10_bgnbd_expected_purchases_derivation.ipynb) | 付録：Fader et al. (2005) 付録の BG/NBD モデルにおける将来購買回数の期待値 $\mathbb{E}\{Y(t) \mid X=x,t_x,T,r,\alpha,a,b\}$ の導出を再現。生存確率・購買確率の各項を分解し、超幾何関数 ${}_2F_1$ を用いた最終的な閉形式表現に至るまでをステップごとに説明 |
@@ -284,7 +208,7 @@ Kaggleの配布ページでは、ライセンスは[CC0 1.0（Public Domain）](
 
 | ノートブック | 内容 |
 |---|---|
-| [11/11_main.ipynb](11/11_main.ipynb) | Online Retail の購入履歴から暗黙的フィードバック行列を構築し、ALS・BPRを学習。特定ユーザーおよび全ユーザーの上位 N 件の推薦を生成・可視化し、Precision@K・Recall@K・nDCG@Kでランキング性能を評価（Python 3.11 環境） |
+| [11/11_main.ipynb](11/11_main.ipynb) | Online Retail の購入履歴から暗黙的フィードバック行列を構築し、ALS・BPRを学習。特定ユーザーおよび全ユーザーの上位 N 件の推薦を生成・可視化し、Precision@K・Recall@K・nDCG@Kでランキング性能を評価 |
 
 Online Retailのデータは、第2章の説明に従って用意します。
 
@@ -293,6 +217,8 @@ Online Retailのデータは、第2章の説明に従って用意します。
 | ノートブック | 内容 |
 |---|---|
 | [12/12_main.ipynb](12/12_main.ipynb) | Online Retail の顧客と商品のグラフを構築し、BPR・NGCF・LightGCN を PyTorch で実装・学習。購入履歴から推薦スコアを計算し、Recall@K・Precision@K・nDCG@K などで評価 |
+
+通常の実行では、各モデルが学習データを最大300回くり返して学習します（300エポック）。
 
 ### 12/src — モデル実装モジュール
 

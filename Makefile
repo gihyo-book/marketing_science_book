@@ -1,4 +1,4 @@
-RUFF := uvx ruff@0.16.4
+RUFF := uv run --locked ruff
 
 .PHONY: lint lint-fix format format-check all
 

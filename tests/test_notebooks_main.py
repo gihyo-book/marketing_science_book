@@ -1,19 +1,21 @@
+import os
 from pathlib import Path
 
 import papermill as pm
 import pytest
 
+REPO_ROOT = Path(__file__).resolve().parents[1]
+NOTEBOOKS = [
+    REPO_ROOT / "main_314.ipynb",
+    *sorted(REPO_ROOT.glob("[0-1][0-9]/*.ipynb")),
+]
+CHAPTER = os.environ.get("NOTEBOOK_CHAPTER")
 MAIN_NOTEBOOKS = [
-    "02/02_main.ipynb",
-    "03/03_main.ipynb",
-    "04/04_main.ipynb",
-    "05/05_main.ipynb",
-    "06/06_main.ipynb",
-    "07/07_main.ipynb",
-    "08/08_main.ipynb",
-    "09/09_main.ipynb",
-    "10/10_main.ipynb",
-    "12/12_main.ipynb",
+    str(path.relative_to(REPO_ROOT))
+    for path in NOTEBOOKS
+    if CHAPTER is None
+    or path.parent.name == CHAPTER
+    or (CHAPTER == "00" and path.name == "main_314.ipynb")
 ]
 
 
@@ -30,7 +32,10 @@ def test_main_notebooks_execute(
     pm.execute_notebook(
         input_path=str(input_notebook),
         output_path=str(output_notebook),
-        kernel_name="python3",
+        kernel_name="marketing-science-src",
+        parameters={"CI_SMOKE_TEST": True}
+        if notebook_relpath == "12/12_main.ipynb"
+        else {},
         cwd=str(notebook_cwd),
         progress_bar=False,
         log_output=False,
