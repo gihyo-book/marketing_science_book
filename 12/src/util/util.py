@@ -43,7 +43,7 @@ def convert_to_num(arg):
 
     try:
         return ast.literal_eval(arg)
-    except (ValueError, SyntaxError):
+    except ValueError, SyntaxError:
         return arg
 
 
