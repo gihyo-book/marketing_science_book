@@ -29,11 +29,12 @@ cd marketing_science_book
 ```
 
 第6章のモデル図には Graphviz 本体（`dot` コマンド）が必要です。
+macOS では、第7章で使う LightGBM の実行用に `libomp` も入れます。
 Linux では PyMC の計算用に C++ コンパイラ、LightGBM などの実行用に `libgomp1` も入れます。
 
 ```bash
 # macOS
-brew install graphviz
+brew install graphviz libomp
 # Ubuntu / Debian
 sudo apt-get update
 sudo apt-get install g++ graphviz libgomp1
