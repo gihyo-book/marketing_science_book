@@ -1,6 +1,6 @@
-# マーケティングサイエンスの理論と実践 サポートページ
+# [マーケティングサイエンスの理論と実践](https://gihyo.jp/book/2026/978-4-297-16025-8) サポートページ
 
-本リポジトリは、「マーケティングサイエンスの理論と実践」のサポートページです。
+本リポジトリは、「[マーケティングサイエンスの理論と実践](https://gihyo.jp/book/2026/978-4-297-16025-8)」のサポートページです。
 
 1. 環境構築方法を含むコード
 2. 本誌では省略した証明
@@ -83,11 +83,56 @@ uv run --locked jupyter lab
 ブラウザーで開いた JupyterLab で、全ノートブックのカーネルに **Marketing Science (Python 3.14)**（登録名: `marketing-science-src`）を選んでください。
 
 どちらの場合も、[main_314.ipynb](main_314.ipynb) で Python とライブラリのバージョンを確認できます。
-各章で使う外部データの準備方法は、下のノートブック一覧に記載しています。
+各章で使う外部データの準備方法は、[利用するデータセット](#利用するデータセット)に記載しています。
 
 ## 共通モジュール
 
 `common/notebook_style.py`には、複数章のノートブックから使う表示設定とデータパス解決処理をまとめています。各章のノートブックを実行するために必要なため、`common/`は削除しないでください。
+
+---
+
+# 利用するデータセット
+
+各章で使う外部データの入手方法と保存先を以下にまとめます。
+
+## 第2・11・12章で使うデータ
+
+Online Retailのデータは、このリポジトリに含まれていません。ライセンスは[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)です。[UCIの配布ページ](https://archive.ics.uci.edu/dataset/352/online%2Bretail)から
+`Online Retail.xlsx`を取得し、CSV形式の`online_retail.csv.gz`に変換してください。
+第2・11・12章で使うため、同じ内容のファイルを`02/data/`、`11/data/`、`12/data/`に保存します。
+
+取得したファイルをリポジトリのルートに置き、次のコマンドで変換できます。
+
+```bash
+mkdir -p 02/data 11/data 12/data
+uv run --locked python - <<'PY'
+import pandas as pd
+
+frame = pd.read_excel("Online Retail.xlsx")
+frame["CustomerID"] = frame["CustomerID"].astype("Int64")
+for chapter in ("02", "11", "12"):
+    frame.to_csv(f"{chapter}/data/online_retail.csv.gz", index=False)
+PY
+```
+
+## 第7章で使うデータ
+
+第7章のデータは、このリポジトリに含まれていません。次の手順で用意してください。
+配布元の説明では、サンプルコードは[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)で公開されています。CSVのライセンスは別には書かれていません。
+
+1. [IBMの配布ページ](https://github.com/IBM/telco-customer-churn-on-icp4d/blob/master/data/Telco-Customer-Churn.csv)を開き、`Download raw file`からCSVファイルをダウンロードする。
+2. `Telco-Customer-Churn.csv`を`07/data/`に保存する。
+
+## 第8章で使うデータ
+
+第8章のデータは、このリポジトリに含まれていません。次の手順で用意してください。
+Kaggleの配布ページでは、ライセンスは[CC0 1.0（Public Domain）](https://creativecommons.org/publicdomain/zero/1.0/)、データはVersion 2と表示されています（2026年9月13日確認）。
+
+1. [Kaggleの配布ページ](https://www.kaggle.com/datasets/rashikrahmanpritom/groceries-dataset-for-market-basket-analysismba)を開き、ZIPファイルをダウンロードする。
+2. ZIPファイルを展開する。
+3. `Groceries data.csv`を`08/data/`に保存する。
+
+`basket.csv`は本書のコードでは使いません。
 
 ---
 
@@ -110,20 +155,6 @@ uv run --locked jupyter lab
 | ノートブック | 内容 |
 |---|---|
 | [02/02_main.ipynb](02/02_main.ipynb) | UCI Online Retail データセットから顧客単位の特徴量を作成・標準化し、外れ値への対処を比較。エルボー法と K-means による顧客分類、および AIC・BIC で成分数を選ぶ GMM による確率的クラスタリングと所属確率の可視化を実施 |
-
-### 第2・11・12章で使うデータ
-
-Online Retailのデータは、このリポジトリに含まれていません。ライセンスは[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)です。[UCIの配布ページ](https://archive.ics.uci.edu/dataset/352/online%2Bretail)から
-`Online Retail.xlsx`を取得し、CSV形式の`02/data/online_retail.csv.gz`に変換してください。
-第2・11・12章で同じファイルを使います。
-
-取得したファイルをリポジトリのルートに置き、次のコマンドで変換できます。
-
-```bash
-mkdir -p 02/data
-uv run --locked python -c \
-  'import pandas as pd; frame = pd.read_excel("Online Retail.xlsx"); frame["CustomerID"] = frame["CustomerID"].astype("Int64"); frame.to_csv("02/data/online_retail.csv.gz", index=False)'
-```
 
 ## 第3章：新製品の普及を予測する
 
@@ -163,31 +194,12 @@ uv run --locked python -c \
 | [07/07_main.ipynb](07/07_main.ipynb) | IBM Telco Customer Churn データセットを用いて、Kaplan–Meier 推定と Cox 回帰による生存時間解析を実施。LightGBM で解約スコアを学習し、適合率・再現率、施策対象リスト、リフト曲線・累積ゲイン曲線でモデルを評価 |
 | [07/07_hazard.ipynb](07/07_hazard.ipynb) | 付録：生存関数 $S(t) = P(T > t)$ とハザード関数 $h(t) = \frac{f(t)}{S(t)}$ の統計的意味、相互関係、および微積分による導出を詳述・可視化 |
 
-### 第7章で使うデータ
-
-第7章のデータは、このリポジトリに含まれていません。次の手順で用意してください。
-配布元の説明では、サンプルコードは[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)で公開されています。CSVのライセンスは別には書かれていません。
-
-1. [IBMの配布ページ](https://github.com/IBM/telco-customer-churn-on-icp4d/blob/master/data/Telco-Customer-Churn.csv)を開き、`Download raw file`からCSVファイルをダウンロードする。
-2. `Telco-Customer-Churn.csv`を`07/data/`に保存する。
-
 ## 第8章：併売パターンを発見する
 
 | ノートブック | 内容 |
 |---|---|
 | [08/08_main.ipynb](08/08_main.ipynb) | Kaggle Groceries データセットを買い物単位のトランザクション形式に整形・ワンホットエンコーディングし、Apriori で頻出アイテムセットを抽出。支持度・確信度・リフトによるアソシエーションルールの作成と評価を実施 |
 | [08/08_apriori_eclat.ipynb](08/08_apriori_eclat.ipynb) | 付録：Apriori と Eclat アルゴリズムをスクラッチ実装し、頻出アイテムセット探索の仕組みを詳説。TIDリスト（ハッシュテーブル）を用いた効率的な支持度計算と Apriori 性質による枝刈り（プルーニング）の最適化技法を実装 |
-
-### 第8章で使うデータ
-
-第8章のデータは、このリポジトリに含まれていません。次の手順で用意してください。
-Kaggleの配布ページでは、ライセンスは[CC0 1.0（Public Domain）](https://creativecommons.org/publicdomain/zero/1.0/)、データはVersion 2と表示されています（2026年9月13日確認）。
-
-1. [Kaggleの配布ページ](https://www.kaggle.com/datasets/rashikrahmanpritom/groceries-dataset-for-market-basket-analysismba)を開き、ZIPファイルをダウンロードする。
-2. ZIPファイルを展開する。
-3. `Groceries data.csv`を`08/data/`に保存する。
-
-`basket.csv`は本書のコードでは使いません。
 
 ## 第9章：トレンドと状態を読む
 
@@ -211,7 +223,7 @@ Kaggleの配布ページでは、ライセンスは[CC0 1.0（Public Domain）](
 |---|---|
 | [11/11_main.ipynb](11/11_main.ipynb) | Online Retail の購入履歴から暗黙的フィードバック行列を構築し、ALS・BPRを学習。特定ユーザーおよび全ユーザーの上位 N 件の推薦を生成・可視化し、Precision@K・Recall@K・nDCG@Kでランキング性能を評価 |
 
-Online Retailのデータは、第2章の説明に従って用意します。
+Online Retailのデータは、[利用するデータセット](#利用するデータセット)の説明に従って用意します。
 
 ## 第12章：つながりを活かして推薦する
 
